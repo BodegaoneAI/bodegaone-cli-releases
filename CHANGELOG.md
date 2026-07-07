@@ -7,6 +7,33 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.1.1] - 2026-07-07
+
+### Added
+- **`--model` is validated at launch.** A mistyped model id (`bodega --model
+  qwen3.6:27` for an installed `qwen3.6:27b`) used to boot a normal-looking
+  session whose first message errored with "model not found". The REPL now
+  checks an explicitly passed `--model` against the provider's installed list
+  at boot and fails fast with a did-you-mean suggestion plus the installed
+  models. Best-effort by design: offline boots, disconnected providers, and
+  empty lists skip the check — the pre-flight can never block a boot.
+
+### Fixed
+- **Linux builds now run on mainstream distributions.** The bundled SQLite
+  native module required GLIBC 2.38, so the CLI crashed on startup on every
+  Linux older than Ubuntu 24.04 — that includes Ubuntu 22.04 LTS, Debian
+  11/12, RHEL 8/9, and Amazon Linux. Because every command loads the database
+  first, the whole CLI was affected, not one feature. The release now compiles
+  the Linux native modules from source against an older GLIBC (2.35), and the
+  pipeline fails the build if the result still needs a too-new GLIBC, so a
+  Linux binary can never silently ship broken again.
+- **Switching models before your first message no longer blanks the screen.**
+  A pre-first-turn `/model` switch dropped the welcome pane, leaving only a
+  lone "switched to …" line on an empty screen. The switch notice is now a
+  quiet note: the welcome pane stays up (its header already shows the new
+  model) and the notice renders in the scrollback once real conversation
+  exists. Error and command-reply notes still surface immediately.
+
 ## [0.1.0] - 2026-07-06
 
 The first public release of Bodega One Code (CLI): the terminal surface of the
