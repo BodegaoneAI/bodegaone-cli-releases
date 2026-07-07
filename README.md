@@ -1,4 +1,18 @@
-# Bodega One Code
+<p align="center">
+  <img src="assets/bodega-logo.png" alt="Bodega One Code" width="300" />
+</p>
+
+<h3 align="center">Bodega One Code — the local-first AI coding agent for your terminal</h3>
+
+<p align="center">
+  <a href="https://github.com/BodegaoneAI/bodegaone-cli-releases/releases/latest">Download</a>
+  ·
+  <a href="CHANGELOG.md">Changelog</a>
+  ·
+  <a href="https://bodegaone.ai">bodegaone.ai</a>
+</p>
+
+---
 
 Binary distribution for **Bodega One Code**, the terminal surface of [Bodega One](https://bodegaone.ai) — a local-first AI coding agent that runs on your machine, against your models, and checks its own work. The source lives in a separate private repo. This repo carries the built bundles, checksums, install scripts, and the self-update manifests.
 
@@ -25,14 +39,20 @@ irm https://github.com/BodegaoneAI/bodegaone-cli-releases/releases/latest/downlo
 ```
 Or with Scoop (the clean path — no SmartScreen prompt):
 ```powershell
-scoop install https://github.com/BodegaoneAI/bodegaone-cli-releases/releases/latest/download/bodega.json
+scoop bucket add bodega https://github.com/BodegaoneAI/scoop-bodega
+scoop install bodega
 ```
 
 ### macOS / Linux
 ```sh
 curl -fsSL https://github.com/BodegaoneAI/bodegaone-cli-releases/releases/latest/download/install.sh | sh
 ```
-macOS bundles are signed and notarized (Developer ID). Homebrew users: the stamped formula ships as a release asset (`bodega.rb`).
+Or with Homebrew:
+```sh
+brew tap bodegaoneai/bodega
+brew install bodega
+```
+macOS bundles are signed and notarized (Developer ID), so `brew` installs launch without a Gatekeeper prompt.
 
 ### Manual download
 
