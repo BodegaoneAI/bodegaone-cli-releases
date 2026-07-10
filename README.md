@@ -92,4 +92,4 @@ bodega help            # the full command tour
 
 ## License & source
 
-Proprietary. The source is developed in a private repository; this repo exists so downloads, checksums, and update manifests live at stable public URLs. Issues and feedback: open an issue here.
+Bodega One Code is free to download and use, no gate. A one-time $39 commercial license (shared with the desktop app) covers commercial use. Source licensing follows a Business Source License (BSL) after distribution; the Quality Enforcement Layer and agentic orchestration remain proprietary. The source is developed in a private repository; this repo hosts downloads, checksums, and update manifests at stable public URLs. Issues and feedback: open an issue here.
