@@ -31,6 +31,30 @@ What it does that other coding CLIs don't:
 - **One shared brain.** Keys, settings, sessions, and MCP servers are shared with the Bodega One desktop app and agent — configure once, use everywhere.
 - **Windows-first.** Native. No WSL required, ever.
 
+## Features
+
+**The agent**
+- **Interactive session + headless mode** a full terminal REPL for working alongside the agent, and `bodega run` for scripts and CI.
+- **Verified output** every agentic run is scored by the Quality Enforcement Layer: a contract is extracted from your request, the code is compiled, your tests are run, and the result is booted and probed. `bodega run` derives its exit code from that verification, so your scripts can trust it.
+- **Fleet runs** `bodega fleet "task" --split 3` races the same task in parallel isolated worktrees and recommends the winner by verification score.
+- **Loops** schedule agentic tasks that run on a cron or interval and only apply when they pass verification.
+
+**Your models**
+- **Bring your keys** OpenAI, Anthropic, Google, and 20+ other providers, using API keys you already have. No account with us, no metering.
+- **Or no keys at all** point it at local models. `bodega models` installs Ollama, recommends models that fit your GPU, and pulls them, from zero to a working local coding agent in one command.
+
+**Private and safe by design**
+- **A real air-gap** flip air-gap mode and zero bytes leave your machine, enforced in the engine, not promised in a policy.
+- **Workspace trust** a cloned repo's committed config cannot register tools or run its own commands until you approve them once, and it re-asks if the command changes.
+- **Secrets stay home** `--trace` and `session export` redact API keys, tokens, and private keys found in tool output before anything is written to disk.
+- **Machine policy** an administrator can force air-gap on, extend the deny list, or disable the repair loop; a session can only get stricter, never looser.
+- **Zero telemetry** no analytics, no phone-home.
+
+**Fits your setup**
+- **One shared brain** keys, settings, sessions, and MCP servers are shared with the Bodega One desktop app and agent: configure once, use everywhere.
+- **MCP** connect Model Context Protocol servers for extra tools and context.
+- **Windows-first** native, no WSL required, ever. Signed and notarized on macOS.
+
 ## Install
 
 ### Windows
@@ -92,4 +116,4 @@ bodega help            # the full command tour
 
 ## License & source
 
-Bodega One Code is free to download and use, no gate. A one-time $39 commercial license (shared with the desktop app) covers commercial use. Source licensing follows a Business Source License (BSL) after distribution; the Quality Enforcement Layer and agentic orchestration remain proprietary. The source is developed in a private repository; this repo hosts downloads, checksums, and update manifests at stable public URLs. Issues and feedback: open an issue here.
+Bodega One Code is free to download and use, no gate. Commercial licensing and full terms are at [bodegaone.ai](https://bodegaone.ai). Source licensing follows a Business Source License (BSL) after distribution; the Quality Enforcement Layer and agentic orchestration remain proprietary. The source is developed in a private repository; this repo hosts downloads, checksums, and update manifests at stable public URLs. Issues and feedback: open an issue here.
