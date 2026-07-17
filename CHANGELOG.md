@@ -7,6 +7,46 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.1.4] - 2026-07-17
+
+### Added
+- **A workspace trust prompt before a cloned repo's config can run anything.**
+  A project's `.bodega.yml` or `.bodega/mcp.json` can define MCP servers, and
+  `.bodega.yml` can define lint and test commands for the repair loop. Opening a
+  repository no longer applies those automatically. The first time a project
+  wants to register an MCP server or run a project-defined command, it is held
+  until you approve it, and approval is remembered per project. Editing the
+  command, its arguments, its credential variable, or its network setting asks
+  again. In a non-interactive run, an unapproved command is skipped rather than
+  run.
+- **A machine policy that a single session cannot loosen.** An administrator can
+  place a policy file that forces air-gap on, adds tools to the deny list, or
+  disables the repair loop. A per-session flag can make a session stricter but
+  never weaker than the policy, at startup and during a session.
+
+### Changed
+- **The bundled engine is updated to the beta.32 desktop release.** Headless and
+  REPL runs now inherit that release's agent-reliability and safety work,
+  including the vendor-tuned sampling defaults for local model families, the
+  centralized cloud-spend recording and caps, and the wider air-gap coverage.
+
+### Fixed
+- **Secrets are removed from traces and session exports.** A `--trace` file and
+  a `session export` now redact API keys, tokens, and private keys that appear
+  in tool output, so a run that reads a credentials file does not copy it into
+  the exported record. Redaction happens before anything is written to disk.
+- **The built-in update channel is pinned to its official host.** The default
+  self-update source is checked to be the official host before it is used, so a
+  tampered configuration cannot silently repoint it. An explicitly configured
+  custom channel is still honored.
+
+## [0.1.3] - 2026-07-10
+
+### Changed
+- **Bundled desktop engine refreshed** so headless and REPL runs inherit the
+  latest desktop-release agent-reliability fixes. (Released without a detailed
+  changelog entry at the time; recorded here for completeness.)
+
 ## [0.1.2] - 2026-07-09
 
 ### Added
