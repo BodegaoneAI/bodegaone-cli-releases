@@ -7,6 +7,22 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.1.5] - 2026-07-24
+
+### Changed
+- **The bundled engine is updated to the beta.32.1 desktop release.** Headless
+  and REPL runs now inherit a wave of agentic-loop and small-model reliability
+  fixes: a deadlock fix for tool calls that pass array/string parameters in
+  unexpected shapes, a better greeting/small-talk gate and coaching messages
+  for lighter local models, a cap on repeated narration with a nudge when a
+  model invents its own tool-call syntax, recovery for three more invented
+  tool-call formats, better routing of memory-related requests, compatibility
+  with community model files that used a strict system-prompt template and
+  previously rejected every request, a fallback for reading free GPU memory
+  when the primary method is unavailable, and a fix for stale verification
+  state leaking between sessions. The CLI's own code has no changes required
+  for this wave.
+
 ## [0.1.4] - 2026-07-17
 
 ### Added
