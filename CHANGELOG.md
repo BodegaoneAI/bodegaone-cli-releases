@@ -7,6 +7,130 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.1.6] - 2026-07-27
+
+### Added
+- **The bundled engine is now beta.33, the verification release.** The CLI ships
+  its own copy of the engine, and that copy was two releases behind, so none of
+  the grading work had reached the command line. It has now.
+
+  The change that matters: the engine used to report finished work as failed.
+  Measured against an independent verifier across 89 real tasks, it solved 35 and
+  called 29 of those failures, because "I could not observe this working" was
+  treated the same as "I watched this fail". Only an observed failure fails a task
+  now. If you gate CI on `bodega run`, expect fewer spurious non-zero exits.
+
+  Carried over from the release hold that followed: a dropped connection can no
+  longer cause the same request to run twice and apply every file edit a second
+  time; the credential scanner can no longer be defeated by padding a secret with
+  filler, and a second copy of that scanner, which feeds output that leaves the
+  machine, had been missed entirely; and a correct plain-text or Markdown file is
+  no longer scored 20 out of 100 and reported as a failure, which had capped every
+  non-code artifact the engine produced.
+
+  One behaviour change worth knowing: a request naming a range of files with "to"
+  or a hyphen ("create out1.txt to out5.txt") is no longer expanded into the files
+  in between. The files you actually named are contracted and the run reports as
+  unverified rather than claiming success over a partial list. Ranges written with
+  "through" still expand.
+
+- **Runs report what they cost.** A finished run now carries token counts, cache
+  usage and spend alongside the existing timing and tool counts, in the streamed
+  output and in `--output json`. Previously a headless run said nothing about its
+  own usage, so there was no way to see what a long job had consumed without
+  opening your provider's dashboard.
+- **A run identifies itself as unattended.** `bodega run` now tells the engine it
+  is running headlessly. Several behaviours meant for unattended work were gated
+  on that signal and had never once taken effect from the command line, because
+  the signal was never sent: capable models were held to guard rails intended for
+  small local ones, and an unattended run was not given the extra room it was
+  meant to have. Interactive and editor sessions are unaffected, and the field is
+  omitted entirely when it does not apply, so an older engine sees no change.
+
+### Changed
+- **Exit code 3 now also means "the run could not be graded".** The engine has
+  started reporting a new outcome: when it edits files under a task it could not
+  classify, the only thing it can check the work against is the list of files it
+  just edited, so every check would pass by construction. Rather than report a
+  pass it did not earn, it now marks the run ungraded.
+
+  Read literally, that outcome looks like a verification failure, and without this
+  release the CLI would report it as one — a run that exited `0` yesterday would
+  exit `1` today and print `FAILED`, with a score to match and nothing you could
+  act on. That is wrong twice over: the work usually happened, and nothing about
+  it was actually checked.
+
+  So an ungraded run now exits `3` — the code that already means "the run
+  finished and nothing was verified" — and reads `NOT VERIFIED`, not `FAILED`. It
+  is deliberately not `0`: nothing was verified, so it should stay visible rather
+  than pass silently. `--qel-threshold` no longer applies to these runs, because
+  the score it would compare against is meaningless. If your pipeline should not
+  fail on an unverified run, `qel: { no_verification_is: pass }` in `.bodega.yml`
+  maps `3` to `0` and now covers this case — while a genuine verification failure
+  still exits `1` and is still not maskable that way.
+
+  **If you gate CI on the exit code, check how you treat `3`.** `--output json`
+  and `--output stream-json` carry a new `ungraded` field alongside `passed`, so
+  a script can tell an ungraded run from a task that simply had nothing to verify.
+- **`bodega loops run` still exits 0 for a parked run**, and now accepts
+  `--output json` so a script can read the run's `status` (`applied`, `parked`,
+  `no_changes`, `qel_failed`, `failed`, `cancelled`) and act on the difference. A
+  parked run means nothing was applied and it needs your review — a real outcome,
+  not a break — and more runs will park now that the engine grades more strictly.
+  Changing the exit code would have broken every pipeline that reads non-zero as
+  "the loop failed", so the detail lives in the output instead.
+
+### Fixed
+- **Cloud Boost spend now counts against `--max-cost`.** Boost is billed on a
+  separate channel from your own provider keys, and the CLI was only watching the
+  key-based one. A run served entirely by Boost reported a cost of $0 and never
+  reached its ceiling, no matter how much it spent. The interactive session had
+  the same blind spot: the on-screen counter sat at $0, and the warning at 80% and
+  the block at 100% never fired. Both surfaces now count it. The two channels are
+  tracked separately and added together, so neither figure can distort the other.
+- **`.bodega.yml` keys that the built-in help documented now actually work.**
+  `bodega help air-gap` described `privacy: { air_gap: true }` and
+  `bodega help modes` described `permission_mode:`; neither key was ever read, so
+  a config written from that help did nothing and said nothing — including, in the
+  air-gap case, leaving someone who believed their data stayed local un-gapped.
+  Both spellings are now honoured, and the help has been corrected to name the
+  real keys (`general.air_gap` and `mode`).
+- **Built-in help no longer documents things that do not exist.**
+  `bodega help air-gap` offered `bodega --air-gap` for an interactive session;
+  there is no such option there and it exited with an error. Use
+  `BODEGA_AIR_GAP=1` or `.bodega.yml` for the REPL, and `bodega run --air-gap`
+  for a single run. `bodega attach --help` and `bodega run --help` listed an exit
+  code 5 that is reserved and never returned, and `attach --help` omitted codes
+  6, 7 and 8 that it genuinely forwards.
+- **Prompts that start with a dash no longer fail to run.** A prompt whose first
+  line began with `-` was read as an unknown command-line option and the run
+  refused to start. Prompts beginning with `-` or `--` now work, `--` still ends
+  the options explicitly, and genuinely malformed options still fail loudly.
+- **A failed run now tells you why.** Runs that ended without a verdict exited
+  with a bare error code and no explanation at all. They now report what
+  happened, how long they ran and how much work they did — in the streamed
+  output, in `--output json`, and as a line on standard error.
+- **Works on older Linux distributions again.** The bundled database library was
+  built against a newer system C library than Debian 11, RHEL 8 and similar
+  ship, so the CLI failed on startup there. Linux builds now target an older
+  baseline, and the build fails if that ever regresses.
+- **A run that produced nothing now says where it stopped.** If a run stalled
+  before it began working, the log held one line saying it had started and then
+  nothing at all — no error, no clue, no way to tell a stuck engine from a slow
+  model. The engine had been reporting its startup progress the whole time and
+  the CLI was discarding it. Those messages now appear in the run log, so silence
+  is diagnosable rather than opaque.
+- **The count of changed files was almost always zero.** Writes were matched
+  against a list of tool names that did not include the one the engine actually
+  uses to write files. Anything reading that count — a script deciding whether a
+  run did any work — saw finished work as a no-op. It now also confirms a file
+  was written rather than merely read, so the count does not swing the other way.
+- **Runs report per-step progress.** The engine marks each step of its loop and
+  the CLI was dropping those markers, so a long quiet stretch could not be
+  explained: there was no way to tell one very slow step from several ordinary
+  ones. They now appear in the streamed output, which is enough to see where a
+  run's time actually went.
+
 ## [0.1.5] - 2026-07-24
 
 ### Changed
