@@ -7,6 +7,166 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.1.7] - 2026-08-05
+
+Bundles engine `v1.0.0-beta.34` (app commit `ff479d15`), pinned so a moved tag
+cannot swap the backend under this release. The previous bundle was
+`v1.0.0-beta.33`.
+
+### Engine fixes that land with this refresh
+
+Fixed in the app and shipped here. Listed because several matter more to the
+command line than they do in the window.
+
+- **DeepSeek models reason by default again.** The engine was sending an explicit
+  instruction not to think unless you had chosen a reasoning level yourself.
+  DeepSeek turns thinking on by default, so anyone who had not touched that
+  setting was running the model with its headline capability off. On a public
+  benchmark of 89 tasks it cost 14 solutions.
+- **Long answers from DeepSeek are no longer cut off early.** The output ceiling
+  was set to a fraction of what the current models actually support.
+- **Three safety rules stopped refusing ordinary commands.** Deleting a directory
+  inside your project read as an attempt to wipe the filesystem; flags containing
+  the letters of a shutdown command were refused; and a one-line script printing a
+  variable named `key` was treated as leaking a certificate. This costs more
+  headless than in the window: there is nobody to re-prompt, so a false refusal
+  can take the whole run with it.
+- **Verification stops failing work for checks it could not run.** This matters
+  more at the command line than in the window, because the exit code is the whole
+  interface: a run that did the job correctly could still exit non-zero, and in a
+  script that is indistinguishable from real breakage. Checks that do not apply
+  to the request - no framework to look for, no content requirements to match, no
+  test to run - were counted as zero rather than left out, so a short correct file
+  could not reach a passing score at any setting. They are now excluded from the
+  total, and a file is credited for existing even when it is short.
+
+  Partial, and worth knowing the shape of it: the case that prompted the fix went
+  from 35 to 50 out of 100 and still does not pass. The rest is blocked on a
+  minimum-length rule that cannot be lifted yet without letting stub files
+  certify as verified.
+- **Overnight and scheduled runs record their verification results.** Runs
+  started without a window never passed a project path into the result handler,
+  so nothing they verified was ever written down, and nothing could be re-checked
+  for regressions later. This is a headless-only bug: it never affected anyone
+  working in the app, and it silently affected everything running under `run`.
+- **The model's reasoning is saved for runs without a window.** The window used
+  to be the only thing writing it, so headless runs stored none at all.
+- **Long tasks on a small context window stop losing their place.** The trigger
+  that decides when to summarise was measuring against the whole window,
+  including the part that cannot be summarised away, so on a small window it
+  summarised roughly every third step and reclaimed almost nothing. One task
+  spent eighty-six tool calls re-reading the same nine files. This lands hardest
+  on local models and on long unattended runs, which is the CLI's territory.
+- **Summaries stopped piling up on top of each other**, each one shrinking the
+  room left for the next.
+- **The task-list reminder reaches the model again.** It was skipped whenever the
+  turn's text began with a brace, which is most of them.
+- **A background task can no longer have its working copy deleted while it is
+  still running**, and a failed comparison no longer reports "nothing to apply".
+- **Answers are no longer written to the transcript twice.**
+- **Connected tool servers**: arguments containing spaces are no longer split,
+  paginated servers expose all their tools rather than the first page, results
+  that are not text say so instead of reporting an empty success, and cancelling
+  a run now cancels the request on the server.
+
+### Added - in the CLI itself, not waiting on the engine tag
+
+- **`--output stream-json` now records why a run stopped.** A run that ran out
+  of time and a run that finished looked identical in the log. The engine has
+  always announced its own budget exits - whether it declined to start another
+  step because the remaining time would not cover finishing up, or a step was
+  cut off mid-flight - and the CLI was discarding those lines before they
+  reached the log.
+
+  Both now appear as `diagnostic` lines carrying the reason in the engine's own
+  words, the elapsed time, and the budget it was working against. The reason is
+  the only place the actual amount of time held back for finishing up is
+  recorded; it varies per run, so a fixed number cannot be assumed.
+
+  This is one line per run at most. Found while measuring the engine on a public
+  benchmark: the same set of runs was analysed twice and produced opposite
+  conclusions about whether the agent was quitting early or being cut off,
+  because the line that settles it was being thrown away.
+
+- **The count of files a run changed now includes files written through the
+  shell.** It only counted the dedicated file tools, so writing with a redirect,
+  a heredoc, `tee` or `sed -i` - how a model actually writes in a terminal -
+  counted as nothing. Runs that had done substantial work reported changing zero
+  files, and, decisively, so did six runs that completed their task
+  successfully.
+
+  The figure remains a documented lower bound rather than a file list, and it
+  deliberately stays conservative: a command that only reads must never be
+  counted. Two ways of miscounting were found by replaying 635 real commands
+  from a benchmark - a `>` inside quotes is text rather than a redirect, and a
+  heredoc feeding a script to an interpreter is input being read, not a file
+  being written.
+
+- **`--output stream-json` now records what a run decided to do about its own
+  verification result.** The verdict was already in the log; the decision taken
+  on it was not. A run could grade its work a failure and stop, and nothing said
+  whether a repair had even been considered - so a run that gave up early and a
+  run that tried and could not were indistinguishable afterwards.
+
+  Each verification round now writes a `diagnostic` line carrying the score, the
+  verdict, and which repair round produced it. A score of zero, a failed verdict
+  and "repair round 0" are all written out explicitly rather than omitted,
+  because those three together are precisely the case worth finding: a run that
+  graded itself a total failure and never attempted a fix.
+
+  Found while measuring the engine against other tools on a public benchmark -
+  29 of 33 graded failures had never attempted a repair, and the run logs could
+  not explain why. Runs that never reach verification produce byte-for-byte the
+  same log as before.
+
+- **`--output stream-json` now records when the engine is pacing itself
+  against a provider's rate limit.** A client-side wait of up to 45 seconds
+  before a request left no trace in the log - the message rode a channel the
+  headless route replaces with a no-op - so a slow run and a paced run looked
+  identical. Both the wait and the case where the engine decides not to wait
+  now appear as `diagnostic` lines.
+
+  This is bounded by construction: the engine only emits it when a delay is
+  actually applied or deliberately skipped, so a healthy run against a
+  well-provisioned account writes none of these lines. Found the same way as
+  the budget-exit gap above - the cost had to be inferred from timing until
+  something finally named it.
+
+- **The `bodega-run-v1.json` schema now describes the diagnostic lines it
+  already ships.** The `diagnostic` frame gained roughly two dozen fields over
+  recent releases - the per-call timing breakdown, the rate-limit pacing
+  fields, the loop-exit reason, the verification-repair fields - and the
+  published schema still only listed the original six. Anyone validating the
+  stream against the schema we publish would have rejected every diagnostic
+  line the engine now emits. The schema still rejects unknown fields; it now
+  also lists the ones that are real. A validating test for the diagnostic
+  frame was added so the two cannot drift apart again silently.
+- **`bodega run` can forward a sandbox-widening root to the backend again,
+  now safely.** The app moved this switch from an environment variable
+  (`BENCH_SANDBOX_ROOT`) to a backend argv flag, because an environment
+  variable inherits across every child process a shell spawns - a leftover
+  export from an earlier session silently widened the agent's filesystem
+  sandbox on a later, unrelated run. Argv does not inherit, so the new form
+  cannot do that by accident.
+
+  This closes the gap that switch left in the CLI: there was no way to pass
+  the new flag through, so a Terminal-Bench task whose deliverables lived
+  outside the task's working directory could not pass. The new flag is
+  intentionally undocumented in `bodega run --help` - it is an operator/bench
+  knob, not something a normal run needs - and it validates the path at the
+  command line before the engine ever sees it: a value shaped like a Windows
+  path is rejected immediately, naming the Git-Bash path-rewriting bug that
+  causes it and the two ways to avoid it, rather than failing later with less
+  context. A run that does not pass the flag is unaffected - the engine
+  receives exactly the arguments it always has.
+
+### Also worth carrying at the same time
+
+- The installer shrank by about 39% in the app. The CLI bundles the engine rather
+  than the shell, so the packaging work does not carry directly - but the backend
+  dependency pruning does, and the bundling step should be re-measured after the
+  refresh to see whether the same `--omit=dev` staging helps here.
+
 ## [0.1.6] - 2026-07-27
 
 ### Added
