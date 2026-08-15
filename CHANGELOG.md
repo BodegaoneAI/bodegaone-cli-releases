@@ -7,6 +7,197 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.1] - 2026-08-15
+
+> `v0.2.0` was tagged but never published — its release run failed in the
+> backend-bundling step before any asset was uploaded (the pinned engine's
+> lockfile lost its libc metadata to an npm-11 regeneration, so the bundler
+> installed two Linux anydoc slices and its own guard refused the bundle; the
+> mac/windows jobs hit a missing root-dependency install in the same step).
+> Nothing shipped as 0.2.0; this release supersedes it with the bundler fixed.
+> Everything below describes what changed since 0.1.7.
+
+Bundles engine `v1.0.0-beta.35` (`BACKEND_REF` in
+`.github/workflows/release.yml`), which carries the backend half of every
+command added below.
+
+### Added
+
+- **`--agent <name-or-id>`** on `bodega run` selects a custom agent for the
+  turn — the CLI half of the app's custom agents feature. Accepts either the
+  agent's name (matched case-insensitively) or its numeric id; a numeric value
+  is used directly as the id with no lookup, matching how the app's own picker
+  sends one. Resolved against `GET /agent-definitions` before the stream
+  opens, so a typo'd name or a disabled agent fails the run immediately
+  instead of silently falling back to the default agent.
+- **`/memory`** — read back what the agent has remembered across sessions,
+  scoped to the current project when it knows one and global otherwise. The app
+  has had persistent memory for a while; the CLI had no way to see it, so you
+  could not tell whether something had been remembered until it either came up or
+  didn't.
+- **The status bar shows the active session's title**, next to the model. Useful
+  the moment you have more than one session and `/resume` stops being obvious.
+- `bodega skills list` / `bodega skills show <name>` and a `/skills` REPL
+  command — see what skills are available (including the twelve built-in
+  ones) and their descriptions. This is discovery only: skills already ran
+  from the CLI before this (the REPL forwards an unrecognised slash command
+  to the backend, which trigger-matches it), but there was no way to see
+  what existed without reading source. Enabled/disabled state still lives
+  backend-side; the REPL doesn't register skills as its own slash commands.
+- `bodega plugin install <path>` — install a plugin (a folder or `.zip` bundling
+  skills and/or MCP servers) from the command line. Prints what the plugin
+  contains before anything is written, asks for approval on any skill that
+  wants elevated permissions (`--approve-grants skill:grant,...` outside a
+  terminal), and warns rather than fails when one of the plugin's MCP servers
+  needs network access you've blocked with air-gap mode. `--dry-run` previews
+  without installing anything.
+- `bodega harness log` / `bodega harness revert <id>` — see a history of
+  those edits and undo one by id. A revert either fully happens or is
+  refused with a clear reason (a newer edit stands in the way, or a file was
+  changed outside the app since); it never reports success on something it
+  didn't actually undo. Reverting memory or knowledge-base edits isn't
+  supported yet and this command says so plainly instead of pretending it
+  worked.
+- `bodega refine "<instruction>"` — propose (and, with `--apply`, write) a
+  continual-harness edit from a plain-language instruction. This is a
+  deterministic heuristic today, not an AI-authored diff: an instruction
+  starting with `persona:` (e.g. `persona: always be terse`) proposes a
+  change to your persona overlay, and anything else proposes a shared memory
+  note recording the instruction text. Without `--apply` it only prints what
+  it would do; nothing is written until you add `--apply`, and applied edits
+  show up in `bodega harness log` and can be undone with
+  `bodega harness revert`. Project-rule and skill edits aren't supported
+  yet.
+
+### Changed
+
+- Startup now verifies the bundled skills and the documentation corpus, not
+  just the Node runtime and the server entry point. Every file in a bundle is
+  listed in its integrity manifest, but startup only re-checked two of them, so
+  a modified skill file or documentation corpus loaded without complaint. Both
+  are read by the agent — skills as instructions, the corpus as answers to your
+  questions about Bodega — so they are now checked every time. Costs under a
+  millisecond. `bodega doctor` still verifies the whole bundle.
+
+- If you're timing `bodega run` on a verification-heavy task (lots of file
+  reads to check its own work) and see it taking longer or doing more
+  iterations than before, that's expected with this release — a fix
+  landed that stops the harness from cutting off verification early. Slower
+  wall-clock time here is the harness reading more thoroughly, not a
+  performance regression.
+
+### Fixed
+
+- **Four of the six lifecycle hook events never actually ran.** `PreToolUse`,
+  `PostToolUse`, `SessionStart` and `SessionEnd` were documented, validated and
+  put through the trust prompt — then never fired. Only `UserPromptSubmit` and
+  `Stop` did. A hook you wrote, approved, and saw accepted would sit there doing
+  nothing, with no way to tell. All six fire now. If you have hooks configured
+  for those events, **they will start running**: a `PreToolUse` hook exiting 2
+  now genuinely blocks the tool, and a `SessionStart` hook exiting 2 stops the
+  session from opening. Worth re-reading anything you wrote against the old
+  behaviour before you upgrade.
+- Hook scripts had no way to tell which event invoked them — the event name was
+  always sent empty, so one script couldn't branch on it. It's populated now.
+- `SessionEnd` hook output was written to a screen already torn down, so a
+  failing or blocked end-hook was completely silent. It prints properly now.
+- Zed's generated custom-agent config snippet (`bodega serve --acp
+  --print-config zed`) omitted `"type": "custom"` on the `agent_servers`
+  entry, so pasting it into Zed's settings produced a config Zed would not
+  accept. Fixed and pinned by a test.
+- The CLI never told the backend it was running from a terminal instead of
+  the desktop app. This meant a fix that adjusts documentation answers for
+  CLI users (so `query_docs` doesn't confidently describe an app-only UI
+  panel to someone at a command line) was silently doing nothing for every
+  CLI session. Every place the CLI starts the backend — `run`, `serve`
+  (both `--acp` and `--webhook`), the interactive REPL, and every other
+  command that talks to the backend — now sets this correctly.
+- Ship the 12 built-in skills in CLI bundles (`bab5436`). Every assembled
+  bundle since the skills feature shipped was missing the `skills/` folder —
+  the backend looked for it, found nothing, and loaded silently with zero
+  skills. No error was shown. If you noticed the built-in skills weren't
+  available, this is why.
+- Ship the correct native module for each platform, and catch this kind of
+  bug automatically going forward (`b3c4fe9`). Two of five release builds
+  were getting a native binary built for the wrong OS/CPU baked in
+  (Windows builds shipping a Linux binary; Intel Mac builds shipping an
+  Apple Silicon one). Both would fail immediately on the affected machine.
+  A packaging test now checks the contents of every release bundle before
+  it ships.
+- The interactive REPL (`bodega` with no arguments) sent a reasoning-effort
+  level of "medium" to the model on every message, even when you didn't ask
+  for one. `bodega run` already did the right thing here — it leaves effort
+  unset unless you pass `--effort`, so the model (or your settings) picks
+  its own default. The REPL now matches. If you run a local model whose
+  default reasoning effort is not "medium", you'll see different (and
+  usually better-suited) behavior in the REPL starting with this release.
+  This also means: if you're comparing timing or quality between an older
+  and a newer CLI, effort level is one more thing that can differ — check
+  with `/effort` if you want to pin it explicitly.
+- `bodega --effort bogus` used to be silently accepted and sent to the
+  backend as-is. It's now rejected at startup with a list of valid values,
+  matching how `bodega run --effort bogus` already behaved.
+- Updating an installed plugin could delete MCP servers it had nothing to do
+  with, including ones you'd enabled yourself. The update logic treated "not
+  in this update's bundle" as "remove it," when it should have only removed
+  servers the plugin itself had previously declared and then dropped.
+- Verification was matching a written file to its expected deliverable by
+  filename alone, so a write to `test/index.ts` could be graded against a
+  deliverable declared as `src/index.ts` — passing or failing work for the
+  wrong file. Matching is now path-aware, with a bare-filename fallback for
+  deliverables that don't specify a directory.
+- `bodega serve --webhook` and `bodega self-update` started anyway when they
+  couldn't read your configuration, instead of refusing. That meant an
+  admin-pinned air-gap policy could be silently skipped if the config file
+  was unreadable or corrupt — an unknown air-gap state was being treated as
+  "off." Both now refuse and say why when the configuration can't be read.
+- `bodega run --agent <name>` could silently fall back to the default agent
+  instead of failing when the backend transport couldn't be asked to list
+  agent definitions. In normal use this never triggered — only the real
+  backend client serves a run, and it always supports the lookup — but a
+  named `--agent` is an explicit selection, and a path existed where it could
+  be dropped without a word. It's a hard error now, matching the existing
+  unknown-name and disabled-agent failures.
+- A PreToolUse hook that rewrites a tool's input on stdout was captured
+  internally but had no way to reach the backend (the approval POST has no
+  field for it yet). The REPL already surfaced a notice saying so rather
+  than silently running the original input as if the rewrite had applied —
+  that behavior is now pinned by a test so it can't regress unnoticed while
+  the wire protocol catches up.
+
+### Security
+
+- `bodega skills trust` / `bodega skills approve <name>` — a cloned repo's
+  `.bodega/skills/` do not load until approved; this is the CLI-side view and
+  approval path for that gate (approving from the app worked before this,
+  approving from the CLI did not). `trust` lists each project skill and
+  whether it's approved; `approve <name>` approves one and prints the content
+  hash it was approved against. **Approval is bound to that exact file
+  content** — edit an approved skill afterward and it goes back to pending,
+  because the hash it was approved under no longer matches. Re-approving
+  after every edit is the intended behavior, not a bug: approval means "I've
+  reviewed *this* text," not "I trust this filename forever."
+- The CLI now refuses `preview_interaction` approvals by name, with a reason,
+  instead of happening to reject them because it couldn't read a field it didn't
+  know about. Same outcome as before, but a decision rather than an accident — a
+  browser consent card can't render in a terminal, so it shouldn't be approvable
+  from one.
+- A project's `.bodega.yml` can no longer turn air-gap *off* for your whole
+  install. Project config can tighten, never loosen; your own flag or env var
+  still wins, as does a machine policy pin.
+- `--air-gap` no longer runs a turn with air-gap unenforced when the backend
+  connection can't apply settings. Previously that case was skipped silently: you
+  passed the flag, nothing was pushed, and the run used whatever air-gap state the
+  backend already had. It now fails the run and says which value it couldn't
+  enforce. Runs where you expressed no air-gap opinion are unchanged — those never
+  touched the backend's setting and still don't.
+- `bodega config set` refuses to flip the agent-browser switches
+  (`browser.widened_enabled`, `browser.persistent_sessions`) and points at the
+  app's Safety panel instead. Those enable outbound browsing and persistent
+  logins, and both are meant to go through the confirmation there rather than a
+  one-liner in a terminal.
+
+
 ## [0.1.7] - 2026-08-05
 
 Bundles engine `v1.0.0-beta.34` (app commit `ff479d15`), pinned so a moved tag
