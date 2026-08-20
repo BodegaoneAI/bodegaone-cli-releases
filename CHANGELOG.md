@@ -7,7 +7,30 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
-## [0.2.1] - 2026-08-15
+## [0.2.2] - 2026-08-20
+
+### Added
+
+- **`bodega skills revoke <name>`** — withdraws SEC-2 approval for a project
+  skill (`.bodega/skills/`). There was previously no way to undo `bodega
+  skills approve` short of hand-editing the trust file on disk. `bodega
+  skills trust` now also tells you which command undoes an approved entry.
+
+### Changed
+
+- **`bodega skills approve` now confirms before it acts**, the same way
+  `bodega loops delete` and `bodega reset` do: on a real terminal it asks
+  y/N, in a script or CI it refuses unless you pass `--yes`/`-y`. This is
+  also what fixes a real gap — the backend's approval gate now requires the
+  caller to report that a human actually confirmed the action whenever the
+  app is in Ask or Plan permission mode, and the CLI had no way to send that
+  report at all, so `bodega skills approve` would fail with a 403 in those
+  modes no matter what you did. If you still hit that 403 (for example the
+  permission mode changed between the prompt and the request), the CLI now
+  says plainly what to do about it instead of printing a bare "unexpected
+  status 403".
+
+
 
 > `v0.2.0` was tagged but never published — its release run failed in the
 > backend-bundling step before any asset was uploaded (the pinned engine's
@@ -17,7 +40,7 @@ until the first tag, everything lives under **Unreleased**.
 > Nothing shipped as 0.2.0; this release supersedes it with the bundler fixed.
 > Everything below describes what changed since 0.1.7.
 
-Bundles engine `v1.0.0-beta.35` (`BACKEND_REF` in
+Bundles engine `v1.0.0-beta.36` (`BACKEND_REF` in
 `.github/workflows/release.yml`), which carries the backend half of every
 command added below.
 
