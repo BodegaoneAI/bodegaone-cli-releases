@@ -7,7 +7,56 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.3] - 2026-08-23
+
+### Added
+
+- Bundles engine `v1.0.0-beta.37` (`BACKEND_REF` + `BACKEND_EXPECTED_COMMIT` in `release.yml`) — the
+  backend this CLI bundles now carries the agent-browser wave (snapshot/refs, `wait_for`, six new preview
+  actions, persisted site approvals, never-automate list) and the V2 hardening pass.
+- `bodega config set browser.widened_enabled=true` / `browser.persistent_sessions=true`
+  now accepts the explicit `--i-understand-this-allows-agent-web-browsing` flag
+  as an alternative to opening the desktop app's Settings → Safety panel — the
+  same "the agent may act as you, until revoked" consequence is printed as a
+  warning either way, so a CLI-only operator has a documented path forward
+  instead of being told to go install the app.
+- Headless runs (`bodega run`) now name WHY a browser-approval frame
+  (`preview_interaction:*` / `preview_script`) was auto-rejected —
+  `headless_no_approver` — in the run log's `approval_resolved` event and on
+  the outgoing approval POST, instead of a silent, unlabeled auto-reject. The
+  CLI has never been able to render this client's browser consent card, in
+  any mode; the rejection itself is unchanged, only its reason is now stated.
+
+### Fixed
+
+- `bodega harness revert` no longer names "memory and knowledge" as the reason
+  a revert is refused — those domains have had revert wiring since the
+  pinned engine's beta.36, so the docs and the refusal message were stale.
+  The refusal path itself is unchanged: an unsupported domain still refuses
+  plainly rather than faking success, and now reads the backend's structured
+  refusal code instead of matching a substring in its error text.
+- `bodega --effort minimal` (and `/effort minimal` in the REPL) is accepted —
+  the backend has supported it since it added GPT-5's minimal reasoning tier;
+  the CLI was rejecting it client-side before the request ever reached the
+  backend.
+- `bodega --help` now shows `bodega serve --webhook` and `bodega skills
+  revoke` — both commands worked before this fix, they just didn't appear in
+  the top-level help.
+- Documented that the app's "Uncensored" prompt template has no CLI
+  equivalent today (it's an app setting); a CLI user gets the same effect via
+  `bodega refine "persona: ..."` or the app's own template picker.
+
 ## [0.2.2] - 2026-08-20
+
+> `v0.2.2`'s own first publish attempt (2026-08-20) also made an EMPTY
+> release on the mirror — same silent-publish shape as `v0.2.0` below, a
+> different cause: beta.36's backend re-exports the `provider-wire-core`
+> package, and a cold clone has no `dist/` for it until `build:core` runs
+> first, so all five platform builds failed `TS2305` after `create-release`
+> had already cut the (asset-less) release. Fixed same-day by building
+> `provider-wire-core` before the backend payload's `tsc` — the same
+> prerequisite step the app repo's own pipeline already carries. The tag
+> below is the fixed, actually-published build.
 
 ### Added
 
@@ -220,6 +269,20 @@ command added below.
   logins, and both are meant to go through the confirmation there rather than a
   one-liner in a terminal.
 
+
+## [0.2.1] - 2026-08-14
+
+Superseded by `v0.2.2` above; documented here for the record rather than left
+as a silent gap in the version history. `v0.2.1` republished `v0.2.0`'s
+feature set unchanged, with only the fix below — see the `v0.2.0` note further
+down for what `v0.2.0` itself was.
+
+### Fixed
+
+- The release bundler needed the same two fixes already applied to the app
+  repo's own pipelines (an npm-11 lockfile regeneration losing libc metadata,
+  and a missing root-dependency install step), so `v0.2.0`'s asset-less
+  release could actually publish.
 
 ## [0.1.7] - 2026-08-05
 
