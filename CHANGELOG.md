@@ -7,6 +7,22 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.4] - 2026-08-27
+
+### Changed
+
+- **Bundles engine v1.0.0-beta.38.** Everything in the app release that lives in the engine
+  applies to the CLI too, notably: MCP tools with whole-number parameters (page sizes, limits)
+  work now instead of being rejected for every value; a model whose last load never finished is
+  not auto-loaded on the next start; managed model downloads verify the publisher's checksum;
+  air-gap also blocks chat requests on every provider path, including the two that previously
+  slipped through at request time; a stuck local model stops
+  in seconds instead of burning the whole iteration budget; provider errors say what is actually
+  wrong; eight new provider presets (36 total).
+- The model catalog gains the opt-in uncensored section (`conduct` tag with provenance). The
+  `--uncensored` list filter is planned for a future CLI release; the catalog data already
+  arrives via the bundled catalog refresh.
+
 ## [0.2.3] - 2026-08-23
 
 ### Added
