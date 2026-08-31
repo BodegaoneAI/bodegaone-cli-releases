@@ -7,11 +7,32 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.5] - 2026-08-31
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.39`** (`BACKEND_REF` + `BACKEND_EXPECTED_COMMIT` in `release.yml`).
+  Everything in the app release that lives in the engine applies here too, notably: your
+  messages keep their `<` and `>` characters (a server-side filter was silently deleting every
+  angle bracket from everything you sent — pasted code lost its generics, and attaching a
+  document tripped a false "message too long" error); the agentic loop defers history
+  summarization when your local model is busy instead of cutting old messages; the routed
+  model tiers now do what the Routing page says; quieter logs.
+
+
+### Added
+
+- **An answer that was cut short says so.** When the bundled engine stops a run at a limit -
+  it stopped narrating and answered early, ran out of steps, or ran out of time - the CLI now
+  prints `stopped at a limit (<reason>) - answer may be incomplete`, in the REPL and on both
+  `bodega run` outputs (the card and `--output json` as `forcedStop`). Matches the app's marker
+  exactly, so both transcripts agree about whether an answer was cut short.
+
 ## [0.2.4] - 2026-08-27
 
 ### Changed
 
-- **Bundles engine v1.0.0-beta.38.** Everything in the app release that lives in the engine
+- **Bundles engine `v1.0.0-beta.38`.** Everything in the app release that lives in the engine
   applies to the CLI too, notably: MCP tools with whole-number parameters (page sizes, limits)
   work now instead of being rejected for every value; a model whose last load never finished is
   not auto-loaded on the next start; managed model downloads verify the publisher's checksum;
