@@ -7,6 +7,37 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.6] - 2026-09-01
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.39.1`** (`BACKEND_REF` + `BACKEND_EXPECTED_COMMIT` in
+  `release.yml`, resolved with `git ls-remote` and hard-checked at build). A pure-fix engine
+  release — everything in it that lives in the engine applies here too:
+
+  - **An agent given full autonomy actually writes its files.** A contract gate answered any
+    file write whose name your prompt had not happened to mention with a silent "skipped", so a
+    run could report an hour of tool calls and leave nothing on disk. It now keys on the
+    autonomy you granted rather than on how the session was launched. This affected cloud
+    models as much as local ones.
+  - **"Thinking: Off" turns thinking off.** On llama.cpp and Qwen models the reasoning-effort
+    setting was read before the off switch, so requests went out with thinking enabled anyway.
+  - **A model that is working is no longer cut short for "talking too much."** The cap meant to
+    stop a model narrating instead of acting was also counting a model that *was* acting, ending
+    runs mid-repair about a third of the way through their budget.
+  - **A model that quietly loaded on the CPU says so** — instead of reporting itself ready while
+    running many times slower, with nothing explaining why.
+  - **Runs that hit a limit end honestly.** A starved context, a turn truncated mid-thought, and
+    a tool call cut off mid-write are each detected, recovered where possible, and named when
+    not.
+
+### Fixed
+
+- **Cloud spend for Sonnet 5 is billed at the correct rate.** A scheduled price increase that
+  the model's vendor publicly cancelled had already taken effect in the engine's pricing table,
+  so Sonnet 5 usage recorded from 2026-09-01 was overstated by 50%. Corrected to the standard
+  $2/$10 per million tokens. Affects `bodega usage` totals and any spend cap keyed on them.
+
 ## [0.2.5] - 2026-08-31
 
 ### Changed
