@@ -7,6 +7,30 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.7] - 2026-09-02
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.40`** (`BACKEND_REF` + `BACKEND_EXPECTED_COMMIT` in `release.yml`,
+  resolved with `git ls-remote` and hard-checked at build). Runs are governed by progress now: the
+  step and time limits are ceilings a run grows toward while it keeps landing files and fixing
+  tests, and a stalled run stops early and says why. Also in the engine: Fable 5.1, a hardening
+  audit (the local API server's agentic endpoint refuses without a key; `str_replace` cannot edit
+  git hooks), old thinking no longer replayed into every local prompt, a calibrated context
+  estimate, gateway providers billed at their own prices. Every forced stop names its reason, and
+  `bodega run` renders it.
+
+### Added
+- `bodega run --max-time <dur>` and `--max-steps <N>`: absolute ceilings for a run. The engine
+  (beta.40) now extends a run's budget while it keeps making progress and stops it early when it
+  stalls; headless runs never ask, so these are the operator's hard limits. `--max-cost` now also
+  sets the engine's per-run spend cap, so the CLI and the engine hold one number.
+
+### Changed
+- The end-of-run card names the real stop reason: a stagnation stop says the run stopped making
+  progress, a spend-cap stop names `--max-cost`, and the time and step ceilings are named as such.
+  "Stopped at a limit" is gone except for reasons this CLI does not know yet.
+
 ## [0.2.6] - 2026-09-01
 
 ### Changed
