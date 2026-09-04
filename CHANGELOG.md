@@ -7,6 +7,32 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.8] - 2026-09-03
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.41`** (`BACKEND_REF` + `BACKEND_EXPECTED_COMMIT` in `release.yml`,
+  resolved with `git ls-remote` and hard-checked at build). Sub-agents: the engine can hand a focused
+  task to another agent on its own provider and model and get its report back — a `delegate` that
+  edits in a throwaway copy with the diff verified before it lands, a read-only `researcher`, and any
+  custom agent marked spawnable. Off by default, with its own spend cap, one local sub-agent at a
+  time, never recursive, refused under air-gap.
+
+### Added
+
+- `bodega run --subagents` lets THAT run hand focused tasks to sub-agents, which run on their own
+  provider and model and report back. Off by default in an unattended run: nobody is watching one, and a
+  run that can spawn its own agents compounds wall-clock and spend. A sub-agent still cannot spawn a
+  sub-agent — that limit lives on the child's own run and no flag relaxes it. Pair it with `--max-cost`,
+  which covers the whole run including its sub-agents.
+  The flag is per run: the two settings it flips are snapshotted before the run and put back when it
+  ends, however it ends, so the desktop app and later headless runs are not left with sub-agents on.
+- `bodega agents` lists this backend's custom agents — each one's provider ("(active)" when it
+  follows yours), model, the isolation it runs under when spawned, and whether the main agent may
+  hand it work. `--json` for scripts, `--all` to include disabled ones. `bodega run --agent <name>`
+  has worked for a while; until now there was no way to see which names were valid without opening
+  the app, and a typo failed closed with no list to check against.
+
 ## [0.2.7] - 2026-09-02
 
 ### Changed
