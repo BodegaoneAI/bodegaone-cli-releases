@@ -7,6 +7,93 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.9] - 2026-09-11
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.42`** (`BACKEND_REF` in `.github/workflows/release.yml`, resolved with
+  `git ls-remote` and hard-checked at build). Bring Your Own Harness, the `ask_user` inline question,
+  Bodega as an MCP server, MCP OAuth, plugin update-with-diff and export, and GPT-5/6 on OpenAI's
+  Responses API all ride on this engine.
+
+### Added
+
+- **The agent can ask you a question without stopping.** When the engine's new `ask_user` tool fires
+  mid-turn, a question card appears beside the composer while the agent keeps working. Answer it
+  there (Enter, or pick an option), or press Esc to keep typing your next prompt and come back with
+  Ctrl-Y. If the turn finishes before you answer, your answer is sent as the next message instead of
+  being lost. The pre-run interview is unchanged: that one still waits for you.
+- **A live diff pane.** `/diff` now opens a panel beside the transcript that shows your
+  uncommitted changes — tracked edits against HEAD and untracked files — and keeps it current
+  as the agent works: it re-reads git when a tool finishes and at the end of every turn,
+  including turns run on an external harness, and after `/undo`. Scroll it with the mouse
+  wheel or Shift+PgUp/PgDn, click a file in its list to jump there, `/diff` again (or
+  `/diff close`) to put it away. The panel is what `git diff` says, never what a tool claimed
+  it wrote, so a refused write shows nothing and an edit made by hand shows up too. Terminals
+  under 110 columns keep the one-shot `/diff` (the diff printed once in the scrollback).
+
+### Fixed
+
+- **`bodega plugin install` now speaks the backend's real wire shape.** The client decoded a
+  `pluginName` the backend never sends, read `strippedGrants` as a list when it is an object, sent skill
+  names where the backend expects the staged skill objects, and treated the commit route's `201` as an
+  error — so the command could never have completed against a real backend, while its tests (fake client
+  shaped like the client) stayed green. The transport is now pinned against JSON recorded from the
+  backend, and the mock backend answers `201` like the real route.
+
+### Added
+
+- **`bodega mcp login <name-or-id>` / `bodega mcp logout`** — OAuth 2.1 sign-in for a remote (HTTP) MCP
+  server whose auth mode is `oauth` (`bodega mcp edit <name> --auth oauth`): prints and opens the sign-in
+  link, then waits for the backend's loopback callback to connect the server. The list shows
+  `sign in required` for such a server until then.
+- **Plugin updates print a changes table.** Installing a plugin whose name is already installed shows
+  each skill and MCP server as new / changed / removed / unchanged; `--skip skill:<name>,mcp:<name>`
+  keeps members as they are. A plugin that changed between preview and commit is refused plainly.
+- **`bodega plugin export <out-dir> --name <n> --skill … --mcp …`** — write your own skills and MCP
+  declarations as an Agent Plugins folder. Credentials and tokens are never written.
+
+### Removed
+
+- **The npm publish release job.** It had never run once (no `NPM_TOKEN` was ever set, and the
+  app never used the npm channel), so every release carried a job whose only outcome was a
+  "skipped" note. The `packaging/npm` wrapper stays in the tree but is not published; the
+  install paths are the GitHub release assets, the one-line installers, Scoop and Homebrew.
+
+### Added
+
+- **Shell completion.** `bodega completion bash|zsh|fish|pwsh` prints a completion script for
+  your shell that completes every top-level command plus `run`'s flags. It's generated straight
+  from the same command list and flag definitions the CLI itself uses, so it can't fall out of
+  sync as commands or flags are added.
+- **Sub-agent visibility.** When a run uses `--subagents`, the REPL now shows a live strip under
+  the conversation listing each sub-agent's agent, provider/model, status, and tool-call count as
+  it works — press Ctrl-G to cycle through them and see the selected one's recent activity, its
+  report, and why it stopped early if it did. Headless runs (`--output stream-json`, `--bg`) get
+  the same information as `subagent_status` NDJSON frames, and a capped/partial child's stop
+  reason now shows up in the run's final summary too.
+- **Reuse an already-running engine instead of spawning a second one.** Every `bodega` command
+  used to spawn its own backend against the same local data directory the desktop app uses, with
+  nothing stopping two processes from writing to the same database at once. The backend now
+  leaves a small marker behind while it's running; the next `bodega` command that starts up checks
+  for it and, when it finds a live, reusable one, talks to that instead of starting another.
+  `bodega doctor` reports whether it found one and whether this run will reuse it.
+
+### Fixed
+
+- **Windows: closing the backend now closes its whole process tree.** Previously, stopping the
+  bundled backend on Windows only killed the top-level process — a spawned `llama-server` or MCP
+  server could keep running in the background after `bodega` exited. It now uses the same
+  `taskkill /T /F` tree-kill the CLI's editor integration (ACP) already relied on.
+- **Engine reuse now works with the desktop app open.** The app's backend has no per-launch
+  bearer secret at all (it trusts the local loopback connection itself), so its marker file never
+  carried one — and a `bodega` run always treated a marker with no secret as "can't safely reuse
+  this," spawning a second backend against the same database anyway, exactly the problem the
+  reuse feature exists to prevent. A `bodega` run now checks whether the engine actually requires
+  a secret before giving up: if an unauthenticated request to it still succeeds, the run reuses it
+  with no credential needed. `bodega doctor` reports this case as reusable ("loopback, no secret")
+  separately from an engine that truly requires a secret it doesn't have.
+
 ## [0.2.8] - 2026-09-03
 
 ### Changed
