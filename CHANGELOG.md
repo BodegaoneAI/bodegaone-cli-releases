@@ -7,6 +7,14 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.10] - 2026-09-11
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.42.1`** (`BACKEND_REF` in `.github/workflows/release.yml`, resolved with
+  `git ls-remote` and hard-checked at build). The engine is beta.42 with its macOS release pipeline
+  repaired; the CLI itself is unchanged from 0.2.9.
+
 ## [0.2.9] - 2026-09-11
 
 ### Changed
