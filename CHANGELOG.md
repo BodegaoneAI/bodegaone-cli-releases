@@ -7,6 +7,28 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.11] - 2026-09-19
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.42.2`** (`BACKEND_REF` in `.github/workflows/release.yml`, resolved with
+  `git ls-remote` and hard-checked at build). That engine fixes provider error reporting, makes
+  OpenCode Zen and Go work properly, and adds the provider account data `/accounts` reads.
+
+### Added
+
+- **`/accounts`** shows what each provider reports about the account behind your saved key: credit
+  left on OpenRouter, DeepSeek and Kimi, OpenCode Go's rolling, weekly and monthly quota with reset
+  times, and Featherless request slots. Providers that report nothing to a normal API key are listed
+  with the reason instead of a blank. `/accounts refresh` asks the providers again rather than using
+  the engine's cached answer.
+
+### Fixed
+
+- **A provider refusing a request is no longer reported as a bad API key.** A 403 from a model
+  outside your plan, a region block, or a free tier limited to the provider's own app now prints as
+  a refusal with the provider's own message, not as an invalid key.
+
 ## [0.2.10] - 2026-09-11
 
 ### Changed
