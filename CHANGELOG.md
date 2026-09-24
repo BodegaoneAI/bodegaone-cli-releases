@@ -7,6 +7,54 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.12] - 2026-09-23
+
+### Security
+
+- **A project `.bodega.yml` can only make safety settings stricter.** A cloned repo can no longer
+  switch you from ask to act, remove your spend cap, or turn off verification. A looser project
+  value is ignored, and `bodega config`, `bodega run` and the REPL tell you so.
+- **The hook trust prompt shows the whole command.** Long commands are wrapped instead of cut off,
+  and if the terminal is too small to show the prompt, approving is refused.
+
+### Added
+
+- **Keys for CI without a prompt.** `bodega config set --stdin <key>` reads the value from stdin
+  and `bodega config set --from-env <VAR> <key>` reads it from an environment variable. The key
+  never sits on the command line and is never printed. Passing a key as `key=value` still works
+  and now warns that it can end up in shell history.
+- **`bodega run --session new|<id>`.** A headless run can now be saved as a session and continued
+  by a later run. The session id is shown on the result card and returned as `sessionId` in
+  `--output json`.
+- **Allow a tool for the session in Ask mode.** Press `A` on a tool or file-write approval to
+  approve it and stop asking about that tool until `/new` or `/resume`. Nothing is saved to disk,
+  and shell commands always ask.
+- **Light terminal theme.** The REPL checks the terminal background and switches to a readable
+  light palette, markdown included. Force it with `--theme light|dark` or `BODEGA_THEME`.
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.43`** (`BACKEND_REF` in `.github/workflows/release.yml`, resolved with
+  `git ls-remote` and hard-checked at build). That engine reads `AGENTS.md` (including subfolders) for
+  every CLI turn, ships the smarter project map, stops a running command and everything it started on
+  Stop, no longer stalls about 10 seconds after a clean TypeScript or JavaScript edit, and fixes a
+  search-pattern security hole.
+- **`/review` and `/debug` now run the built-in skills the README describes.** The REPL's own
+  commands took those names first, so the skills never ran. The diff reviewer is now
+  `/review-diff` and the layout diagnostics are `/layout`.
+
+### Fixed
+
+- An engine warning that is not fatal no longer fails `bodega run` or cuts a REPL answer in two.
+- A lost connection to the engine now says "connection lost" instead of looking like a finished turn.
+- A second `bodega` command no longer dies when the first one exits; engines tied to one command are
+  not shared, and `--bench-sandbox-root` always starts its own engine and says so.
+- Shutting down gives the engine time to exit cleanly and never hangs; Ctrl-C on Windows now also
+  stops the engine's child processes (such as a local model server holding GPU memory).
+- `bodega run --bg` restarts the same `bodega` binary you ran, not whichever is first on your PATH.
+- Vision-model hints from the engine are now shown, as in the app.
+- A steered REPL turn can no longer be ended early by the previous turn finishing.
+
 ## [0.2.11] - 2026-09-19
 
 ### Changed
