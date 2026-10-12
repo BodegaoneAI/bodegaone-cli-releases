@@ -7,6 +7,41 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.13] - 2026-10-12
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.44`** — uses engine v1.0.0-beta.44 (`BACKEND_REF` in `.github/workflows/release.yml`).
+
+### Security
+
+- Build with Go 1.26.9 and update golang.org/x/net, golang.org/x/text and goldmark, clearing every reachable vulnerability reported by govulncheck.
+- Bundle Node 22.23.3 (was 22.23.1) with refreshed SHA-256 pins.
+
+### Fixed
+
+- `bodega doctor` no longer deletes the running engine's `engine.json`. It started its own engine, overwrote that file and removed it on exit, so every later command started yet another engine; it now reuses the running engine like the other commands.
+- `bodega` attaches to a running Bodega One desktop app again. The app now enforces an API token by default; it publishes this launch's token in an owner-only `engine.token` file next to `engine.json`, and the CLI reads it and sends it as a Bearer token on its probe and attach calls. If the file is missing or unreadable the CLI falls back to starting its own engine, and an older app without the file is probed as before.
+- `bodega acp check` now sends the ACP `protocolVersion` as the integer `1` instead of the string `"1.0"`.
+
+### Added
+- `bodega run --output stream-json` now includes two diagnostic lines per step: which harness message (a reminder, a check, a hint) was added before a model call, and what triggered each call. They help explain why a run took the steps it did.
+- `bodega version` now prints a Releases link and a Star link on a terminal (not when piped or with `--json`), the
+  update check points at the release notes, and `bodega star` prints the GitHub page and asks before opening it.
+
+- `bodega init` now starts with the same question as the desktop app: run on this computer, with a cloud key, or offline only (air-gap). The provider list that follows only shows what fits the answer. Offline only turns on air-gap first and then uses a model already on this machine, or explains how to bring one over. On a machine with no GPU it says so before you choose. The answer is saved for `bodega doctor`, which now shows it as "setup path". Running `bodega init` with `-y` or without a terminal behaves as before.
+- `bodega rules`: manage reusable rule sets from the terminal, the same ones the desktop app uses. `list` shows every set and which ones apply to the current project (in order), `show` prints one, `add <file>` imports AGENTS.md or another rules file (files over 32,000 characters are refused before anything is sent), `attach` / `detach` / `order` edit the current project's list, and `remove` deletes a set after asking (`--yes` in scripts). `list` and `show` take `--output json`.
+- A diff preview when you approve a line-tag edit (`hashline_edit`, which the agent only has when the engine's `edit.hashline` setting is on). The approval used to show raw JSON; it now shows the usual diff. If the tags no longer match the file, it says the edit will be refused instead.
+
+### Fixed
+
+- The bundled engine moves to the next desktop release, which brings its fixes to the CLI. Among them: reasoning
+  requests to several hosted cloud models were being rejected, newer cloud models could fail on the second turn,
+  turning reasoning off failed on one model family, and long runs now reuse the prompt cache on every provider.
+  These take effect once this release bundles that engine version.
+
+- A headless run's list of changed files now includes files changed by a line-tag edit.
+
 ## [0.2.12] - 2026-09-23
 
 ### Security
