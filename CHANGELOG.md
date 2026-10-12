@@ -7,6 +7,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.14] - 2026-10-12
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.45`** — uses engine v1.0.0-beta.45 (`BACKEND_REF` in `.github/workflows/release.yml`).
+- MCP servers that speak the 2026-07-28 protocol revision now connect and work through the bundled engine.
+- Includes the engine's Electron-independent backend fixes, so the CLI's engine behaves the same without the desktop app.
+- Desktop control (in-chat consent cards, unattended Act mode, action highlights) is desktop-app only and is not available in the CLI.
+
 ## [0.2.13] - 2026-10-12
 
 ### Changed
