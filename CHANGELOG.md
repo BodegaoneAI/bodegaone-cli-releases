@@ -7,6 +7,14 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.15] - 2026-10-12
+
+### Changed
+
+- **Bundles engine `v1.0.0-beta.45.1`** — uses engine v1.0.0-beta.45.1 (`BACKEND_REF` in `.github/workflows/release.yml`).
+- Chat replies no longer show raw text-form tool calls from models that write them out instead of calling the tool.
+- Requests to write a document are no longer mistaken for commands.
+
 ## [0.2.14] - 2026-10-12
 
 ### Changed
