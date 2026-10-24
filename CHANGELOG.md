@@ -7,6 +7,29 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.17] - 2026-10-23
+- **Bundles engine `v1.0.0-beta.47`** — uses engine v1.0.0-beta.47 (`BACKEND_REF` in `.github/workflows/release.yml`).
+
+The new commands below need Bodega engine v1.0.0-beta.47 or newer, which this release bundles. Pointed at an older engine (for example an older desktop app it attaches to), each one stops with "needs Bodega engine v1.0.0-beta.47 or newer" instead of failing on a missing route.
+
+### Added
+
+- **`bodega env`** - saved local environments: a name for a set of folders, a git worktree per folder, files to copy into it and an optional setup script. `env list`, `env show <name>`, `env add <name> --folder PATH[:worktree][:primary]` (repeat `--folder`; add `--setup FILE`, `--copy PATTERN`, `--port-base N`, `--model`, `--effort`, `--mode`), `env edit <name>` (only the flags you give change; `--no-setup`, `--no-copy` and `--no-port-base` clear a value), `env rm <name>` (asks, or `--yes`), `env start <name>` and `env setup <session>`. Relative folder paths are made absolute for you. Only local environments exist; the engine refuses SSH and Bodega HQ ones with its own sentence.
+- **`bodega run --env <name> "<task>"`** - start the environment and run the task in it as a background session. It prints the session number and `bodega attach <number>` to watch it. It takes `--mode`, `--model`, `--provider` and `--output human|json`; options that cannot apply (`--bg`, `--session`, `--cwd`, `--tier`, `--agent` and similar) are refused.
+- **A setup script never runs unasked.** When a start has one, the whole script is printed with the folder it runs in and the 10 minute limit, and you are asked: `y` runs it, `N` skips it (the session still starts), `stop` cancels the session and discards its worktrees. `--yes` does not approve a script. With no terminal and no flag the approval is left waiting (a task given with `run --env` does not start until it is answered), and `bodega env setup <session> --run|--skip|--stop` answers it later. `--run-setup` and `--skip-setup` answer for you, and `--run-setup` approves only the script that was just printed: if it changed after it was shown, nothing runs. The engine's refusals (name taken, a folder is missing, no commits yet, too many sessions running, already answered) are printed in its own words.
+- **`bodega btw <session> "<question>"`** - a read-only side question about a session while it keeps working. `--on same|small_local|cloud|<preset>/<model>` picks the model, `--timeout` stops waiting. The answer is printed on its own (so a pipe gets only the answer) and the model note goes to stderr; while the question waits for a free slot it says why. The engine's refusals are shown with the next step: no cloud model while air-gap is on, no smaller local or cloud model set, no model named, the spending cap reached.
+- **`bodega scheduler`** - what is using a model slot and what is waiting: each running session with its model and how long, each waiting one in order with why (the GPU is busy, not enough VRAM, background slots full, a cloud limit, the spending cap), how long it has waited and whether the wait is overdue, and the GPU line. `--json` prints the engine's answer unchanged.
+- **`bodega remote projects` and `bodega remote allow-project <path>`** - see and change the folders chat may open with /project. A relative path is made absolute first; `--remove` takes a folder off the list. A vaulted project is listed as "vaulted: chat cannot use it". The engine's refusals (not a folder, vaulted, too many) are printed exactly as the engine words them and exit 1.
+- **`bodega sessions --tree`** now shows asides under the session they were asked about, and a failed environment setup reads as "Environment setup failed" with the first line of its output.
+
+### Changed
+
+- **Sonnet 4.5 retirement.** The model picker marks Sonnet 4.5 "Retires Nov 30, use Sonnet 5.5" until that date and hides it from then on, matching the app. `--model` on `run`, on the interactive session and on a parallel run (and each `--lane`) uses it as typed with a heads-up before Nov 30, and from Nov 30 switches to Sonnet 5.5 and says so, never silently.
+
+### Fixed
+
+- **Commands join the engine `bodega serve` is already running instead of starting their own.** The check for a running engine now sends that engine its secret (only to this computer), so a setup approval started by one command can be answered by the next. A command that starts its own engine no longer overwrites or deletes the running engine's details when it exits, and when it cannot join it says why.
+
 ## [0.2.16] - 2026-10-17
 
 ### Changed
