@@ -7,6 +7,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.18] - 2026-10-25
+- **Bundles engine `v1.0.0-beta.47.1`** — uses engine v1.0.0-beta.47.1 (`BACKEND_REF` in `.github/workflows/release.yml`).
+
+### Fixed
+- **Attaching to a running engine checks who answers before sending its secret.** The first `/health` request now carries no credential; the engine must report a fingerprint matching `engine.json` before the bearer is sent, so another process that took over the recorded port never sees it. An engine that cannot prove its identity is not reused (a fresh one starts instead). Needs the matching engine release, which reports the fingerprint.
+- **On Windows, an `engine.json` that holds a secret must be owned by you** (or Administrators), the same trust check Linux and macOS already did with file permissions.
+
 ## [0.2.17] - 2026-10-23
 - **Bundles engine `v1.0.0-beta.47`** — uses engine v1.0.0-beta.47 (`BACKEND_REF` in `.github/workflows/release.yml`).
 
