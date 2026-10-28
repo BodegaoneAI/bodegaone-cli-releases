@@ -7,6 +7,9 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.19] - 2026-10-28
+- **Bundles engine `v1.0.0-beta.48`** — uses engine v1.0.0-beta.48 (`BACKEND_REF` in `.github/workflows/release.yml`).
+
 ## [0.2.18] - 2026-10-25
 - **Bundles engine `v1.0.0-beta.47.1`** — uses engine v1.0.0-beta.47.1 (`BACKEND_REF` in `.github/workflows/release.yml`).
 
