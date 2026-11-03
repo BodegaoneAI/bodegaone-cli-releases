@@ -7,6 +7,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.20] - 2026-11-03
+- **Bundles engine `v1.0.0-beta.49`** — uses engine v1.0.0-beta.49 (`BACKEND_REF` in `.github/workflows/release.yml`).
+- **Changed:** `bodega run --parallel --wait --timeout D` now exits **124** when the timeout is reached (was 3). Exit 3 is reserved for a `bodega run` that finished with nothing verifiable, so a script could not tell the two apart.
+
 ## [0.2.19] - 2026-10-28
 - **Bundles engine `v1.0.0-beta.48`** — uses engine v1.0.0-beta.48 (`BACKEND_REF` in `.github/workflows/release.yml`).
 
