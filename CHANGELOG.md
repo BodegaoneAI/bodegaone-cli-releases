@@ -7,6 +7,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.21] - 2026-11-09
+Bundles engine `v1.0.0-beta.50`.
+- **Added:** `bodega open <session>` (app deep link), `bodega session archive|restore <id>`, `bodega sessions --archived` and `--links`, `bodega pr` and `bodega pr merge` (confirm or `--yes`; uses `github.merge_method`). Mirrors the app's conductor features.
+- **Added:** `bodega status` prints the next suggested step for the current git folder (the same answer as the app's "what's next" strip), with the branch and git counts; the pull request and CI status are left out under air-gap. `--json` for the raw answer.
+- **Added:** `bodega fleet start "<task>" --branch <name>` runs one fleet member on your own local branch (its commits land there; apply and discard never delete it), and `--from-worktree <path>` forks a new branch from that worktree's last commit. Mirrors the app's Start from picker.
+- **Fixed:** sessions over 2,000 messages load again: the CLI now reads them in pages, since the engine refuses a whole-chat read that large.
+- **Fixed:** `bodega pr` says the checks are unknown when your GitHub token cannot read check runs (a fine-grained token), instead of listing none.
+- **Fixed:** a run or REPL turn bound to a session (`--session`) now saves your message to that session before the reply streams, so continuing it later no longer shows only the assistant's side. If the save fails you get a warning and the turn still runs.
+
 ## [0.2.20] - 2026-11-03
 - **Bundles engine `v1.0.0-beta.49`** — uses engine v1.0.0-beta.49 (`BACKEND_REF` in `.github/workflows/release.yml`).
 - **Changed:** `bodega run --parallel --wait --timeout D` now exits **124** when the timeout is reached (was 3). Exit 3 is reserved for a `bodega run` that finished with nothing verifiable, so a script could not tell the two apart.
