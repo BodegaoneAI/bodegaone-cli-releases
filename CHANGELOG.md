@@ -7,6 +7,9 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.22] - 2026-11-09
+Bundles engine `v1.0.0-beta.51`.
+
 ## [0.2.21] - 2026-11-09
 Bundles engine `v1.0.0-beta.50`.
 - **Added:** `bodega open <session>` (app deep link), `bodega session archive|restore <id>`, `bodega sessions --archived` and `--links`, `bodega pr` and `bodega pr merge` (confirm or `--yes`; uses `github.merge_method`). Mirrors the app's conductor features.
