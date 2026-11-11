@@ -7,6 +7,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.24] - 2026-11-11
+Bundles engine `v1.0.0-beta.53`.
+- **Added:** `bodega run` and the REPL now wait for the llama.cpp model before the first turn. When the provider is llama.cpp and nothing is loaded, they ask the engine to load your default model and print `loading <model>... <stage>` on stderr; with `--output stream-json` each stage also arrives as a `diagnostic` frame named `llamacpp_load`, and stdout is untouched. A load that fails or times out ends the run with the reason instead of "llama.cpp is not reachable". If the engine has already started loading (or waits for the load itself), the CLI only waits.
+- **Added:** `bodega models load <name> [--wait]`, `models unload`, `models status [--json]` (loaded model, state, context, CPU fallback and any blocked-load notice), `models list --local` (installed GGUFs), `models rescan`, `models add <path.gguf> [--mmproj <path>]`, and `models rm <gguf-id>` (or `rm --gguf <name>`), which is separate from removing an Ollama model.
+- **Added:** `bodega doctor` shows a llama-server check when the provider is llama.cpp: ready, still loading, no model loaded, a load that was not repeated because the previous one never finished, a crash, or a silent CPU fallback.
+- **Added:** `bodega config set --merge <key>=<json>` folds a JSON object into the stored map for `llamacpp.model_custom_args`, `llamacpp.flags`, `llm.model_overrides` and other object-valued keys. Without `--merge`, setting such a key prints a one-line warning that the whole map is replaced.
+- **Added:** `bodega run --temperature <0-2>` sets the sampling temperature for that run only. A per-run context size (`--ctx`) is not available yet: the engine's chat request has no field for it.
+- **Added:** `bodega init --local [--runtime llamacpp|ollama]` sets up a local model directly. The llama.cpp path installs the runtime if needed, uses an installed GGUF or downloads the catalog's best fit, selects it, and waits until it has loaded instead of starting a background warm-up and reporting success early.
+
 ## [0.2.23] - 2026-11-11
 Bundles engine `v1.0.0-beta.52`.
 - **Changed:** user-facing help, error and status text no longer uses em dashes (hyphens instead).
