@@ -7,6 +7,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.23] - 2026-11-11
+Bundles engine `v1.0.0-beta.52`.
+- **Changed:** user-facing help, error and status text no longer uses em dashes (hyphens instead).
+- **Changed:** `bodega loops create` takes `--cwd` like the other commands; `--project` still works as a hidden deprecated alias. REPL loop and sub-agent status lines use `[bracketed]` labels.
+- **Fixed:** an internal panic on the main path, in the TUI's Update/View, or in a background goroutine (stream readers, approvals, backend handshake, fleet, webhook, sub-agent streams) prints one actionable line with the issue URL and exits 70 instead of a Go stack. The TUI terminal is restored first, the SessionEnd hook and the backend stop run (together bounded to 5 seconds), and every command the TUI model returns, including those inside batches and sequences, is covered. Set `BODEGA_DEBUG=1` or `true` for a real trace. Goroutines that only copy a pipe or wait on a child process are not covered; the welcome tips no longer overflow terminals under 45 columns.
+- **Docs:** FEATURES.md lists trusted folders and device presets as app-only.
+
 ## [0.2.22] - 2026-11-09
 Bundles engine `v1.0.0-beta.51`.
 
