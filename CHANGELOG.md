@@ -7,6 +7,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.25] - 2026-11-11
+Bundles engine `v1.0.0-beta.53.1`.
+- **Added:** `bodega run --ctx <tokens>` sets a context window ceiling for that run only. It can lower the engine's window for the run, never raise it past what the server really has. Values below 2048 are treated as 2048. Leave it off to use the engine's own window. A value that is not a positive whole number is rejected before any request is sent. It needs an engine from beta.53.1 or later; older engines ignore the field.
+
 ## [0.2.24] - 2026-11-11
 Bundles engine `v1.0.0-beta.53`.
 - **Added:** `bodega run` and the REPL now wait for the llama.cpp model before the first turn. When the provider is llama.cpp and nothing is loaded, they ask the engine to load your default model and print `loading <model>... <stage>` on stderr; with `--output stream-json` each stage also arrives as a `diagnostic` frame named `llamacpp_load`, and stdout is untouched. A load that fails or times out ends the run with the reason instead of "llama.cpp is not reachable". If the engine has already started loading (or waits for the load itself), the CLI only waits.
