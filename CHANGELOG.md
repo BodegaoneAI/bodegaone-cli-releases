@@ -7,6 +7,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 Versioned sections are cut at release (the release pipeline is tag-triggered on `v*`);
 until the first tag, everything lives under **Unreleased**.
 
+## [0.2.27] - 2026-11-15
+Bundles engine `v1.0.0-beta.54.1` (engine hotfix, no CLI changes).
+- **Fixed:** in Ask mode the engine asks before starting a sub-agent, and work from a sub-agent that did not run in Act mode is kept for review instead of applied.
+- **Fixed:** a loop file committed to a repository can no longer enable unattended runs or point a loop at a different target.
+- **Fixed:** a merge that cannot finish is undone and the work is kept; a merge is refused when you have staged changes.
+- **Fixed:** when more than one engine runs on the machine, only one does housekeeping, and applies take a cross-process lock.
+
 ## [0.2.26] - 2026-11-15
 Bundles engine `v1.0.0-beta.54`.
 - **Added:** git verb approval (the always-prompt and headless-reject rules apply to pushes the text check recognizes; a deliberately disguised or script-wrapped push in Act mode may not be detected, while Ask prompts for every shell line). Only the typed `git` tool's read verbs run without a prompt in Ask mode, and only when their arguments pass a per-verb allowlist (an unlisted flag, an abbreviation of one, a flag-shaped value or an extra field prompts); a shell command that mentions git always prompts in Ask. Writes prompt in Ask. Push and pull always prompt in every mode and show the destination resolved by one resolver (the push URL with credentials masked, the remote, and what is pushed: `remote.pushDefault`, `branch.*.pushRemote`, `push.default`, every refspec, `--tags`/`--all`/`--mirror` are honored). A commit on the default branch is refused unless `--allow-default-branch-commit` (REPL and `run`). `[A]` allow-for-session is never offered for a git tool.
